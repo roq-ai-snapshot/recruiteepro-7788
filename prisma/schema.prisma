@@ -1,0 +1,76 @@
+generator client {
+  provider = "prisma-client-js"
+  previewFeatures = ["clientExtensions"]
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model business_organization {
+  id          String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name        String        @db.VarChar(255)
+  user_id     String        @db.Uuid
+  user        user          @relation(fields: [user_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  job_posting job_posting[]
+}
+
+model feedback {
+  id           String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  interview_id String    @db.Uuid
+  user_id      String    @db.Uuid
+  comment      String
+  interview    interview @relation(fields: [interview_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  user         user      @relation(fields: [user_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+}
+
+model interview {
+  id                 String          @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  job_application_id String          @db.Uuid
+  interviewer_id     String          @db.Uuid
+  date_time          DateTime        @db.Timestamp(6)
+  feedback           feedback[]
+  user               user            @relation(fields: [interviewer_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  job_application    job_application @relation(fields: [job_application_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+}
+
+model job_application {
+  id             String      @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  job_posting_id String      @db.Uuid
+  applicant_id   String      @db.Uuid
+  status         String      @db.VarChar(255)
+  interview      interview[]
+  user           user        @relation(fields: [applicant_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  job_posting    job_posting @relation(fields: [job_posting_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  resume         resume[]
+}
+
+model job_posting {
+  id                       String                @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  title                    String                @db.VarChar(255)
+  description              String
+  business_organization_id String                @db.Uuid
+  job_application          job_application[]
+  business_organization    business_organization @relation(fields: [business_organization_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+}
+
+model resume {
+  id                 String          @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  file_path          String          @db.VarChar(255)
+  job_application_id String          @db.Uuid
+  job_application    job_application @relation(fields: [job_application_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+}
+
+model user {
+  id                    String                  @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  email                 String                  @unique @db.VarChar(255)
+  firstName             String?                 @db.VarChar(255)
+  lastName              String?                 @db.VarChar(255)
+  roq_user_id           String                  @db.VarChar(255)
+  tenant_id             String                  @db.VarChar(255)
+  business_organization business_organization[]
+  feedback              feedback[]
+  interview             interview[]
+  job_application       job_application[]
+}
